@@ -17,13 +17,10 @@ def solver_diff(
                 bnd_Left,
                 u_Right,   # boundary condition u(X_max,t) = u_Right
                 bnd_Right,
-                theta=0.5, # scheme
-                logX = False,
+                theta=0.5  # scheme
                 ):
 
     # solve du/dt = gamma(x) * d/dx (alpha(x,t)*du/dx) + f(x,t) + h(x,t) * u(x,t)
-
-    # prepare
 
     x = np.linspace(X_min, X_max, Nx+1)
     dx = x[1] - x[0]
@@ -32,7 +29,7 @@ def solver_diff(
     time = np.linspace(0, T_max, Nt+1)
 
     u_n1 = np.zeros(Nx+1)   # u at t[n+1]
-    u_n =  np.zeros(Nx+1)   # u at t[n]
+    u_n = np.zeros(Nx+1)    # u at t[n]
 
     Dl = 0.5 * Dparam * theta
     Dr = 0.5 * Dparam * (1-theta)
@@ -41,10 +38,13 @@ def solver_diff(
     A_lower = np.zeros(Nx)
     A_upper = np.zeros(Nx)
 
-    alpha = np.zeros(Nx + 1)
-    gamma = np.zeros(Nx + 1)
-    h = np.zeros(Nx + 1)
+    alpha = np.zeros(Nx+1)
+    gamma = np.zeros(Nx+1)
+    h = np.zeros(Nx+1)
     b = np.zeros(Nx+1)
+
+    u_all = np.zeros((Nt+1, Nx+1))
+    dudx_all = np.zeros((Nt+1, Nx+1))
 
     # initial condition
 
@@ -114,5 +114,17 @@ def solver_diff(
         # update
 
         u_n, u_n1 = u_n1, u_n
+        u_all[n] += u_n
 
-    return x, u_n
+        # calc du/dx
+
+        #dudx = np.diff(u_n) / dx
+        #dudx_all[n] += np.append(0, dudx)
+
+        dudx = (u_n[2:] - u_n[:-2]) / (2. * dx)
+        dudx_tmp = np.append(0, dudx)
+        dudx_all[n] += np.append(dudx_tmp, 0)
+       
+    u_all[Nt] += u_n
+
+    return x, u_n, time, u_all, dudx_all, dx
